@@ -18,12 +18,19 @@ Page {
     property string nextPlayingText
     property string descriptionText
 
-    Component.onCompleted: {
-        chasTVApp.updateCurrentChannelInfo.connect(updateChannelData)
-        updateChannelData()
+    function updateHackUrl() {
         if (channelId==="match-tv") {
             updateChannelData(channelId)
         }
+        else {
+            updateChannelData()
+        }
+    }
+
+    Component.onCompleted: {
+        chasTVApp.updateCurrentChannelInfo.connect(updateChannelData)
+        updateChannelData()
+        updateHackUrl()
     }
 
     signal htmlReady(string html, string channelHack)
@@ -57,7 +64,7 @@ Page {
                     fileUrl = fileUrl[0].trim().replace("postTrackingEvent('content_play', {file: '","").slice(0, -4)
                     fileUrl += "action_name=content_play&from="+encodeURIComponent("https://matchtv.ru/")+
                             "&media_state_code=1&media_id=133529&player_version=7&playeri=1&has_adblock=0&site_owner_id=2&main_rubric=12189&flash_version=26&file="+encodeURIComponent(fileUrl)
-                    console.log(fileUrl)
+                    //console.log(fileUrl)
                     if (video.status===MediaPlayer.NoMedia) {
                         channelUrl = fileUrl
                     }
@@ -150,7 +157,7 @@ Page {
                     text: "Перезапустить поток"
                     onClicked: {
                         video.source = ""
-                        updateChannelData()
+                        updateHackUrl()
                     }
                 }
             }
