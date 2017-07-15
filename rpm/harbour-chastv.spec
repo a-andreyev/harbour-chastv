@@ -13,14 +13,16 @@ Name:       harbour-chastv
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Unofficial ChasTV Client
-Version:    0.1
-Release:    1
+Version:    0.2
+Release:    3
 Group:      Qt/Qt
 License:    LICENSE
 URL:        http://aa13q.ru/
 Source0:    %{name}-%{version}.tar.bz2
 Source100:  harbour-chastv.yaml
 Requires:   sailfishsilica-qt5 >= 0.10.9
+Requires:   qt5-qtmultimedia
+Requires:   sailfish-components-media-qt5
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
@@ -28,7 +30,7 @@ BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  desktop-file-utils
 
 %description
-Short description of my Sailfish OS Application
+Unofficial Chas.TV Sailfish Client for watching some russian tv streams
 
 
 %prep
