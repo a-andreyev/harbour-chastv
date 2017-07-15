@@ -48,7 +48,11 @@ ApplicationWindow
     Component.onCompleted: {
         fillChannelsModel()
     }
-    function request(url, callback) {
+    function request(url, callback, method) {
+        if (!method) {
+            method = 'GET'
+        }
+
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = (function(myxhr) {
             return function() {
@@ -59,7 +63,7 @@ ApplicationWindow
                 }
             }
         })(xhr);
-        xhr.open('GET', url, true);
+        xhr.open(method, url, true);
         xhr.send('');
     }
     function fillModel(element, index, array) {

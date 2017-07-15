@@ -21,76 +21,109 @@ Page {
     Component.onCompleted: {
         chasTVApp.updateCurrentChannelInfo.connect(updateChannelData)
         updateChannelData()
+        if (channelId==="match-tv") {
+            updateChannelData(channelId)
+        }
     }
 
-    signal htmlReady(string html)
+    signal htmlReady(string html, string channelHack)
 
-    function updateChannelData() {
+    function updateChannelData(channelHack) {
         if (chasTVApp) {
             const host = "http://chas.tv"
             const channelPath = "/channel"
             const chUrl = host+channelPath+"/"+channelId
+            if (channelHack) {
+                if (channelHack==="match-tv") {
+                    chUrl = "https://matchtv.ru/vdl/player/media/133529?autostart=true&only_player=1&disable_related=true&disable_sharing=true"
+                }
+            }
+
             chasTVApp.request(chUrl, function (o) {
-                htmlReady(o.responseText)
+                htmlReady(o.responseText, channelHack)
             });
         }
     }
 
     onHtmlReady: {
-        const regexChName = /<h1 class="pull-left">.+<\/h1>/g;
-        const regexChUrl = /this.videoplayer = new Uppod\({m:"video",uid:"videoplayer",file:".+"}\);/g;
-
-        // Title:
-        if (!channelName) {
-            var m;
-            while ((m = regexChName.exec(html)) !== null) {
-                // This is necessary to avoid infinite loops with zero-width matches
-                if (m.index === regexChName.lastIndex) {
-                    regexChName.lastIndex++;
-                }
-                // The result can be accessed through the `m`-variable.
-                channelName = m[0].replace("<h1 class=\"pull-left\">","").replace("</h1>","")
-            }
-        }
-
-        // Url:
-        if (video.status===MediaPlayer.NoMedia) {
-            while ((m = regexChUrl.exec(html)) !== null) {
-                // This is necessary to avoid infinite loops with zero-width matches
-                if (m.index === regexChName.lastIndex) {
-                    regexChName.lastIndex++;
-                }
-
-                // The result can be accessed through the `m`-variable.
-                channelUrl = m[0].split("\"").slice(-2)[0]
-                // console.log(channelUrl)
-            }
-        }
-
-        // Now playing:
-        var nowPlaying = html.match(/<span class="channel-tv-program-current">( |[\r\n])+.+<\/span>/g)[0].trim();
-        if (nowPlaying) {
-            nowPlayingText = nowPlaying
-        }
-        // Next playing:
-        var nextPlayingTitle = html.match(/<span class="channel-tv-program-next">( |[\r\n])+.+( |[\r\n]).+<\/span>/g)[0].trim()
-        var nextPlayingTime = html.match(/<span class="channel-tv-program-next-minutes-left">( |[\r\n])+.+( |[\r\n]).+<\/span>/g)[0].trim().replace("минуты","").replace("минут","");
-        if (nextPlayingTitle) {
-            nextPlayingText = "Через " + nextPlayingTime + " мин.: " + nextPlayingTitle
-        }
-
-        // Description:
-        if (!descriptionText) {
-            var dm = html.match(/<p><strong>Описание:<\/strong> +.+<\/p>/g)
-            if (dm) {
-                var descr = dm[0].trim()
-                if (descr) {
-                    descriptionText = descr
+        if (channelHack) {
+            console.log(channelHack)
+            if (channelHack==="match-tv") {
+                //console.log(html)
+                const fileUrlregex = /postTrackingEvent\('content_play', {file: '.+'}\);/g;
+                var fileUrl = html.match(fileUrlregex)
+                if (fileUrl) {
+                    // so ugly, sorry :(
+                    fileUrl = fileUrl[0].trim().replace("postTrackingEvent('content_play', {file: '","").slice(0, -4)
+                    fileUrl += "action_name=content_play&from="+encodeURIComponent("https://matchtv.ru/")+
+                            "&media_state_code=1&media_id=133529&player_version=7&playeri=1&has_adblock=0&site_owner_id=2&main_rubric=12189&flash_version=26&file="+encodeURIComponent(fileUrl)
+                    console.log(fileUrl)
+                    if (video.status===MediaPlayer.NoMedia) {
+                        channelUrl = fileUrl
+                    }
                 }
             }
         }
+        else {
+            const regexChName = /<h1 class="pull-left">.+<\/h1>/g;
+            const regexChUrl = /this.videoplayer = new Uppod\({m:"video",uid:"videoplayer",file:".+"}\);/g;
 
-        chasTVApp.currentChannelChanged(channelLogoUrl, channelName, nowPlayingText, nextPlayingText)
+            // Title:
+            if (!channelName) {
+                var m;
+                while ((m = regexChName.exec(html)) !== null) {
+                    // This is necessary to avoid infinite loops with zero-width matches
+                    if (m.index === regexChName.lastIndex) {
+                        regexChName.lastIndex++;
+                    }
+                    // The result can be accessed through the `m`-variable.
+                    channelName = m[0].replace("<h1 class=\"pull-left\">","").replace("</h1>","")
+                }
+            }
+
+            // Url:
+            if (video.status===MediaPlayer.NoMedia) {
+                while ((m = regexChUrl.exec(html)) !== null) {
+                    // This is necessary to avoid infinite loops with zero-width matches
+                    if (m.index === regexChName.lastIndex) {
+                        regexChName.lastIndex++;
+                    }
+
+                    // The result can be accessed through the `m`-variable.
+                    channelUrl = m[0].split("\"").slice(-2)[0]
+                    // console.log(channelUrl)
+                }
+            }
+
+            // Now playing:
+            var nowPlaying = html.match(/<span class="channel-tv-program-current">( |[\r\n])+.+<\/span>/g)[0].trim();
+            if (nowPlaying) {
+                nowPlayingText = nowPlaying
+            }
+            // Next playing:
+            var nextPlayingTitle = html.match(/<span class="channel-tv-program-next">( |[\r\n])+.+( |[\r\n]).+<\/span>/g)[0].trim()
+            var nextPlayingTime = html.match(/<span class="channel-tv-program-next-minutes-left">( |[\r\n])+.+( |[\r\n]).+<\/span>/g)[0].trim();
+            if (nextPlayingTime.indexOf("минут")<0) {
+                nextPlayingTime += "мин."
+            }
+
+            if (nextPlayingTitle) {
+                nextPlayingText = "Через " + nextPlayingTime + ": " + nextPlayingTitle
+            }
+
+            // Description:
+            if (!descriptionText) {
+                var dm = html.match(/<p><strong>Описание:<\/strong> +.+<\/p>/g)
+                if (dm) {
+                    var descr = dm[0].trim()
+                    if (descr) {
+                        descriptionText = descr
+                    }
+                }
+            }
+
+            chasTVApp.currentChannelChanged(channelLogoUrl, channelName, nowPlayingText, nextPlayingText)
+        }
     }
 
     Drawer {

@@ -13,8 +13,8 @@ Name:       harbour-chastv
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Unofficial ChasTV Client
-Version:    0.2
-Release:    3
+Version:    0.3
+Release:    1
 Group:      Qt/Qt
 License:    LICENSE
 URL:        http://aa13q.ru/
